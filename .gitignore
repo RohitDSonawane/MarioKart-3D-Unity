@@ -1,0 +1,29 @@
+# Unity
+/[Ll]ibrary/
+/[Tt]emp/
+/[Oo]bj/
+/[Bb]uild/
+/[Bb]uilds/
+/[Ll]ogs/
+/[Uu]ser[Ss]ettings/
+/[Mm]emory[Cc]aptures/
+*.csproj
+*.sln
+*.slnx
+*.pidb.meta
+*.pdb.meta
+.vs/
+# Claude Code local
+.claude/settings.local.json
+
+# Local notes, tooling and machine-specific files
+/Plans/
+/.claude/
+/.mcp.json
+/.vscode/
+/GeneratedAssets/
+/ImportSource/
+*.log
+*.zip
+Thumbs.db
+.DS_Store
