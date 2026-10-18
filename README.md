@@ -85,10 +85,21 @@ The scripts in `Tools/Tests` run inside the open editor, drive karts with script
 - The AI can still hesitate on one curb near the harbour wall and recovers by itself.
 - Windows only. Other platforms have not been tried.
 
+## Assets and credits
+
+**The art, models, textures, animations and audio in this repository are not my own work.** I downloaded them from sources on the internet that offer them as free downloads, and I use them here only to study how a game like this is put together. I did not create, commission or purchase any of them, and I do not hold the rights to them.
+
+- Free to download does not mean free to reuse. Whatever licence or terms each original source has still applies, and the rights stay with the original creators and owners.
+- The character, track and item names are used only to label things in a study project. They belong to their owners.
+- Nothing in this repository grants you any right to those assets. If you want to reuse them, go back to the original source and read its terms.
+- If you are the creator or rights holder of anything here and want it credited or removed, open an issue and I will do it promptly.
+
+**What I wrote myself:** the gameplay code in `Assets/_Project/Scripts`, the editor tooling, the test scripts in `Tools/Tests`, the scene assembly and this documentation.
+
 ## Disclaimer
 
-This project exists only to learn game development. It is not for sale, is not monetised and makes no claim of ownership over any third-party name, character, model, texture, sound or other content it may use for study. All such rights stay with their owners. Please do not redistribute the project or its assets. If you hold rights to anything here and want it removed, open an issue and it will be taken down.
+This project exists only to learn game development. It is not for sale, is not monetised, and is not affiliated with or endorsed by any game company or asset creator. Please do not use it commercially and do not repackage the third-party assets from this repository.
 
 ## License
 
-The source code in `Assets/_Project/Scripts`, `Tools` and the build tooling was written by the author for study. No license has been chosen yet, so all rights are reserved until one is added.
+The source code I wrote (see "What I wrote myself" above) is shared for learning. No licence has been chosen for it yet, so all rights are reserved until one is added. This does not cover the third-party assets described in "Assets and credits".
