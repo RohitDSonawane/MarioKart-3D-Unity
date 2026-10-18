@@ -1,0 +1,75 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 77542fde830a1eb4ca4c90edf2c89eb5, type: 3}
+  m_Name: SfxLibrary
+  m_EditorClassIdentifier: Assembly-CSharp::HarborRacer.Audio.SfxLibrary
+  courseIntro: {fileID: 8300000, guid: b2fce51caa66433459a347ac5ccf4ac4, type: 3}
+  toadHarbor: {fileID: 8300000, guid: fa14416097109e847980f5ca7cd9036c, type: 3}
+  toadHarborFinalLap: {fileID: 8300000, guid: 99f39f2cac4314742b531c7a4648871f, type: 3}
+  finalLapStinger: {fileID: 8300000, guid: 0439a957c3fcbbf428dd04820ac26a1e, type: 3}
+  starTheme: {fileID: 8300000, guid: 37d0aeee4f69d854ab206ef0f8254c3c, type: 3}
+  firstPlaceFinish: {fileID: 8300000, guid: 8c4c05c0935697b4098884ab35ab99ed, type: 3}
+  goodResults: {fileID: 8300000, guid: 6b8006d080fa32d4b97661e6fbb340a8, type: 3}
+  badResults: {fileID: 8300000, guid: 53bae85c6724abc4a94fb1fe5846009f, type: 3}
+  engineIdle: {fileID: 8300000, guid: cf538ecc87f8f354eab0108f6e156d29, type: 3}
+  engineAccel: {fileID: 8300000, guid: a8b47b9b6d2616048b0bc323f37d2da3, type: 3}
+  engineRevStart: {fileID: 8300000, guid: a49ac2835a599654c86f74b78f5e9695, type: 3}
+  driftHop: {fileID: 8300000, guid: e77c58870aea6284398b856337b9b8eb, type: 3}
+  driftSqueal: {fileID: 8300000, guid: 5434845ef418bcf4da415f3d46515400, type: 3}
+  driftSteer: {fileID: 8300000, guid: 7c504db255edc2a419690754e4d04144, type: 3}
+  boostBurst: {fileID: 8300000, guid: 2e60b6b6b33bee74f9e54c9589bcf1f0, type: 3}
+  jumpPanel: {fileID: 8300000, guid: de62b095e35f31a478a37c465ce19605, type: 3}
+  gliderOpen: {fileID: 8300000, guid: 213745430217832489d5f268f9524764, type: 3}
+  gliderClose: {fileID: 8300000, guid: 2c812e7aee7b08a4db22bff3d7b2535a, type: 3}
+  gliderFlutter: {fileID: 8300000, guid: ad7b17cea772c9640a492ba56734223f, type: 3}
+  landing: {fileID: 8300000, guid: aa16fb57b5124654ebddc861f5826309, type: 3}
+  wallCrash: {fileID: 8300000, guid: 317b80d8d74f4c84d994b7731ba55790, type: 3}
+  kartBump: {fileID: 8300000, guid: 5b17c70fc16ad38499816eb04de4c2b5, type: 3}
+  hoverStart: {fileID: 8300000, guid: c89a57b7759fa9849ba07cf50c097f0f, type: 3}
+  hoverFinish: {fileID: 8300000, guid: 0cafaacbfa596e3449ce53f5ec34f3e8, type: 3}
+  hoverCharge: {fileID: 8300000, guid: c9334454271ecbc439f37cfc63d543aa, type: 3}
+  rouletteTick: {fileID: 8300000, guid: e06b3af607e2b774c9e0ebd3e3d36d22, type: 3}
+  rouletteStop: {fileID: 8300000, guid: 5cb1c9edff3595545a1ed905349f0bcb, type: 3}
+  warningBeep: {fileID: 8300000, guid: 317d17c4f4ac9514fbb219943af73624, type: 3}
+  coinPickup: {fileID: 8300000, guid: b2a0c177a5b603245b5adf90293e1796, type: 3}
+  explosion: {fileID: 8300000, guid: 715e2bdc3528b11478932644e1ddc779, type: 3}
+  bombFuse: {fileID: 8300000, guid: 4fe166cd6bcece44db083bdd6a5f968f, type: 3}
+  bulletStart: {fileID: 8300000, guid: c6646bccdfc7cb84fa133f47652ed42c, type: 3}
+  bulletLoop: {fileID: 8300000, guid: 660e7216eebbccf4bb3a1afc0d0b29f0, type: 3}
+  bulletEnd: {fileID: 8300000, guid: 6060dc3afafdaa142ad149574e331268, type: 3}
+  crateBreak: {fileID: 8300000, guid: 24b029c36da95e642b5ea54db50a6bb4, type: 3}
+  countdown321: {fileID: 8300000, guid: 854cdac5b0c740047a81e3c27659ebe0, type: 3}
+  countdownGo: {fileID: 8300000, guid: e9b7331a54829ff418a73e4c07e313cc, type: 3}
+  marioBoost:
+  - {fileID: 8300000, guid: e1ca2daf107618c48b47005e64eb6d4b, type: 3}
+  - {fileID: 8300000, guid: 21ba70975fa0ed943bcc0251ff5e6b23, type: 3}
+  - {fileID: 8300000, guid: c5263d492cd4feb41961a8b50a48a0fc, type: 3}
+  - {fileID: 8300000, guid: 6595adad8b399bc46a1eb4a045fe11ab, type: 3}
+  - {fileID: 8300000, guid: 88f8b836671f26c458a2353a0964f77c, type: 3}
+  - {fileID: 8300000, guid: 33a78e385d6589949a7afa1dd21496e2, type: 3}
+  marioTrick:
+  - {fileID: 8300000, guid: 0d6bd50c46c6919419dd17242ed8a200, type: 3}
+  - {fileID: 8300000, guid: e487591492ab3e4429b221ef8d049198, type: 3}
+  - {fileID: 8300000, guid: abcb4c6f8da2bed46a016abc62914980, type: 3}
+  marioHurt:
+  - {fileID: 8300000, guid: ab1530e2aa8eb7e4b8b46fea923b05da, type: 3}
+  - {fileID: 8300000, guid: b0e25986db650ce4ca6e4a892f2d6036, type: 3}
+  - {fileID: 8300000, guid: be54413bf93e58b468dbc6bda9e669e1, type: 3}
+  marioRocketStart: {fileID: 8300000, guid: 2a8937f8564ab6745baba7a73090fe2a, type: 3}
+  marioWin: {fileID: 8300000, guid: 1dc01b2057e99ef4ea0f93cef5aeee85, type: 3}
+  marioLose: {fileID: 8300000, guid: 9c03d11c9adc0e842bb486e73baf34cc, type: 3}
+  trolleyMove: {fileID: 8300000, guid: c4455f4db905f9f4197cb2a45fa5ea2c, type: 3}
+  seaWaves: {fileID: 8300000, guid: dbcd8814622a0e646b53e71a61d5e44d, type: 3}
+  toadCheers:
+  - {fileID: 8300000, guid: d83785c18d92ee64b9d881e90db58bbe, type: 3}
+  - {fileID: 8300000, guid: 7cce8cc65d658354395c25a784dd6545, type: 3}
+  - {fileID: 8300000, guid: f4774847b6a98d44085965a66ba52134, type: 3}
