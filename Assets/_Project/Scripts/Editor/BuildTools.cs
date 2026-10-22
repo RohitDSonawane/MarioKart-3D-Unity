@@ -28,6 +28,9 @@ namespace HarborRacer.EditorTools
         public static string BuildStandalone()
         {
             Directory.CreateDirectory(Path.GetDirectoryName(BuildOutputPath));
+            PlayerSettings.fullScreenMode = FullScreenMode.FullScreenWindow;
+            PlayerSettings.defaultIsNativeResolution = true;
+            PlayerSettings.allowFullscreenSwitch = true;
 
             // Ensure ToadHarbor is in Build Settings
             var sceneList = new[] { new EditorBuildSettingsScene(MainScenePath, true) };
