@@ -18,6 +18,9 @@ namespace HarborRacer.Kart
 
         public KartController kart;
         public float aiRespawnSpeed = 60f;
+        public float maxAirSeconds = 7f;          // airborne this long without gliding is not a jump
+        public float killHeight = -340f;          // below the sea (the Water zone sits at about -280)
+        float airTime;
         public Phase Current { get; private set; }
         public bool Respawning => Current != Phase.None;
         public event Action Teleported;
@@ -62,6 +65,11 @@ namespace HarborRacer.Kart
         {
             if (!Respawning)
             {
+                // Safety net for a kart that ends up where no zone catches it (flung far off the track, tumbling in the air, below the sea).
+                // The Water zone is only 20 u thick, so it cannot be the only thing that brings a kart back.
+                bool flying = !kart.State.GroundHit && !kart.State.Gliding && !kart.State.Bullet && !kart.State.AntiGravity;
+                airTime = flying ? airTime + dt : 0f;
+                if (airTime > maxAirSeconds || transform.position.y < killHeight) { airTime = 0f; Begin(RespawnReason.OutOfBounds); return; }
                 // remember where we last stood on solid ground (every 10 steps)
                 if (kart.State.Grounded && !kart.State.OnJumpPanel && ++safeCounter >= 10)
                 {

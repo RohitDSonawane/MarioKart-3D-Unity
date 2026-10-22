@@ -10,7 +10,7 @@ using UnityEngine;
 /// <summary>Drives the player-side kart straight through a jump panel from a start distance at a given speed and logs the run.</summary>
 public static class PanelRun
 {
-    public static string Run(string panelName, float runUp, float speed, float lateral, int seconds)
+    public static string Run(string panelName, float runUp, float speed, float lateral, int seconds, int pressStep, int pressKind, float angle)
     {
         var sb = new StringBuilder();
         var rm = Object.FindFirstObjectByType<RaceManager>();
@@ -28,35 +28,39 @@ public static class PanelRun
         var player = rm.Player; var kart = player.Kart;
         var pk = player.GetComponent<PlayerKartInput>(); if (pk) pk.enabled = false;
         var panel = Object.FindObjectsByType<JumpPanelZone>().First(p => p.name == panelName);
-        Vector3 f = panel.transform.forward; f.y = 0; f.Normalize(); Vector3 right = Vector3.Cross(Vector3.up, f);
+        Vector3 pf = panel.transform.forward; pf.y = 0; pf.Normalize(); Vector3 f = Quaternion.Euler(0f, angle, 0f) * pf; Vector3 right = Vector3.Cross(Vector3.up, f);
         Vector3 start = panel.transform.position - f * runUp + right * lateral;
-        Physics.Raycast(start + Vector3.up * 6f, Vector3.down, out var gh, 30f, HarborRacer.Layers.GroundMask, QueryTriggerInteraction.Ignore);
+        Physics.Raycast(start + Vector3.up * 80f, Vector3.down, out var gh, 300f, HarborRacer.Layers.GroundMask, QueryTriggerInteraction.Ignore);
         player.transform.SetPositionAndRotation(gh.point + Vector3.up * 1.1f, Quaternion.LookRotation(f, Vector3.up));
         kart.Body.position = player.transform.position; kart.Body.rotation = player.transform.rotation; Physics.SyncTransforms();
         kart.CurrentSpeed = speed; kart.Body.linearVelocity = f * speed;
-        var input = new ScriptedInput { throttle = 1f }; kart.Input = input;
+        var input = new ScriptedInput { throttle = 1f }; kart.Input = input;          // pressKind 1 = drift, 2 = trick, pressed for one step at pressStep
         var fu = typeof(KartController).GetMethod("FixedUpdate", BindingFlags.NonPublic | BindingFlags.Instance);
         for (int i = 0; i < 3 * 50 && rm.State != RaceState.Racing; i++) rm.Tick(0.02f);     // through the countdown
         foreach (var r in rm.Racers) r.Kart.controlsLocked = false;
+        float minY = 1e9f, maxReal = 0f, minUp = 1f; Vector3 end = Vector3.zero;
         for (int i = 0; i <= seconds * 50; i++)
         {
+            if (i == pressStep) { if (pressKind == 1) input.driftPressed = true; if (pressKind == 2) input.trickPressed = true; }
             fu.Invoke(kart, null); Physics.Simulate(0.02f);
-            if (i % 10 == 0)
+            minY = Mathf.Min(minY, kart.transform.position.y); maxReal = Mathf.Max(maxReal, kart.ForwardSpeed); minUp = Mathf.Min(minUp, kart.transform.up.y); end = kart.transform.position;
+            if (i % 25 == 0)
             {
                 var st = kart.State;
-                sb.AppendLine($"t={i * 0.02f:F1} pos=({kart.transform.position.x:F0},{kart.transform.position.y:F1},{kart.transform.position.z:F0}) real={kart.ForwardSpeed:F0} cmd={kart.CurrentSpeed:F0} gnd={st.Grounded} jumpPanel={st.OnJumpPanel} glide={st.Gliding} stun={st.Stunned} locked={kart.controlsLocked}");
+                sb.AppendLine($"t={i * 0.02f:F1} pos=({kart.transform.position.x:F0},{kart.transform.position.y:F1},{kart.transform.position.z:F0}) real={kart.ForwardSpeed:F0} cmd={kart.CurrentSpeed:F0} vy={kart.Body.linearVelocity.y:F0} hop={(kart.Drift != null && kart.Drift.Hopping)} trickPending={st.TrickPending} gnd={st.Grounded} jumpPanel={st.OnJumpPanel} glide={st.Gliding} stun={st.Stunned} locked={kart.controlsLocked}");
             }
         }
         Physics.simulationMode = SimulationMode.FixedUpdate;
+        sb.AppendLine($"SUMMARY angle {angle} speed {speed} lateral {lateral}: minY {minY:F0}, max real speed {maxReal:F0}, min kart up.y {minUp:F2}, end ({end.x:F0},{end.y:F0},{end.z:F0})");
         return sb.ToString();
     }
 
     class ScriptedInput : IKartInput
     {
-        public float throttle;
+        public float throttle; public bool driftPressed, trickPressed;
         public float Throttle => throttle; public float Brake => 0f; public float Steer => 0f;
-        public bool DriftHeld => false; public bool DriftPressed => false; public bool TrickPressed => false;
+        public bool DriftHeld => driftPressed; public bool DriftPressed => driftPressed; public bool TrickPressed => trickPressed;
         public bool ItemPressed => false; public bool ItemBackPressed => false; public float Pitch => 0f;
-        public void EndFixedStep() { }
+        public void EndFixedStep() { driftPressed = false; trickPressed = false; }
     }
 }
