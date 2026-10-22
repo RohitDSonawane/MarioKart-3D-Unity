@@ -298,8 +298,21 @@ namespace HarborRacer.Kart
             if (sphere == null || CurrentSpeed <= 0f) return false;
             Vector3 c = transform.TransformPoint(sphere.center);
             float r = sphere.radius * transform.lossyScale.x;
-            return Physics.SphereCast(c, r * 0.95f, rot * Vector3.forward, out hit, 0.6f, 1 << Layers.Wall, QueryTriggerInteraction.Ignore);
+            if (Physics.SphereCast(c, r * 0.95f, rot * Vector3.forward, out hit, 0.6f, 1 << Layers.Wall, QueryTriggerInteraction.Ignore)) return true;
+            // Much of the track's scenery (handrails, building fronts, curbs) is on the Drivable layer. Without this the kart stopped dead against it with
+            // the commanded speed still at 80+ ("speed cmd 82 / real 0"). Thin rays tell a vertical face from the ground and from ramps.
+            Vector3 f = rot * Vector3.forward, up = rot * Vector3.up;
+            float reach = r + 0.6f;
+            foreach (float ang in DrivableWallRayAngles)
+            {
+                Vector3 dir = Quaternion.AngleAxis(ang, up) * f;
+                if (Physics.Raycast(c, dir, out var rh, reach, 1 << Layers.Drivable, QueryTriggerInteraction.Ignore) && rh.normal.y < 0.5f
+                    && rh.collider.GetComponentInParent<KartController>() == null) { hit = rh; return true; }
+            }
+            return false;
         }
+
+        static readonly float[] DrivableWallRayAngles = { 0f, -20f, 20f };
 
         // ---- ground ----
 
