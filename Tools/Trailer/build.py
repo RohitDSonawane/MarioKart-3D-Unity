@@ -7,7 +7,7 @@ MUSIC = '../Assets/_Project/Audio'
 W, H, BAR = 1920, 1080, 140          # 1920x800 picture inside black bars: 2.4:1
 GRADE = "eq=contrast=1.06:saturation=1.1:gamma=0.98,curves=r='0/0 0.5/0.52 1/1':b='0/0.02 0.5/0.49 1/0.97',unsharp=5:5:0.4"
 def letterbox(y=BAR): return f"crop={W}:{H - 2 * BAR}:0:{y},pad={W}:{H}:0:{BAR}:black"
-GRAIN = "noise=alls=5:allf=t"
+GRAIN = "noise=alls=2:allf=t"
 ENC = ['-c:v', 'libx264', '-preset', 'medium', '-crf', '15', '-pix_fmt', 'yuv420p']
 
 
