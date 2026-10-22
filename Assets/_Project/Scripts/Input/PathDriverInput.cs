@@ -141,6 +141,17 @@ namespace HarborRacer.Inputs
             nodeIndex = (bi + 1) % path.Count;
         }
 
+        /// <summary>Distance from the kart to the racing-line segment it is on (flat).</summary>
+        float DistanceToLine()
+        {
+            int n = path.Count;
+            Vector3 a = path.GetNode((nodeIndex - 1 + n) % n).position, b = path.GetNode(nodeIndex).position;
+            Vector3 ab = Vector3.ProjectOnPlane(b - a, Vector3.up), ap = Vector3.ProjectOnPlane(transform.position - a, Vector3.up);
+            float len2 = ab.sqrMagnitude;
+            float k = len2 > 0.01f ? Mathf.Clamp01(Vector3.Dot(ap, ab) / len2) : 0f;
+            return (ap - ab * k).magnitude;
+        }
+
         /// <summary>True when drivable ground lies within a few units below the point (no gap or edge there).</summary>
         static bool RoadUnder(Vector3 p, Vector3 up)
         {
@@ -256,6 +267,8 @@ namespace HarborRacer.Inputs
                 Vector3 toPanel = jp.transform.position - pos;
                 if (toPanel.magnitude < 60f && Vector3.Dot(toPanel, fwd) > -5f) { desired = Mathf.Min(desired, panelApproachSpeed); break; }
             }
+            // plaza corners that stalled karts (nodes 2-6, two 90 degree turns). Not the overpass top: its jump panel needs the full run-up.
+            if (ai && nodeIndex >= 2 && nodeIndex <= 6) desired = Mathf.Min(desired, 40f);
             // Harbor ramp descent corner (nodes 16-20 near 196,-22,-79): limit speed to prevent overshooting seawall
             if (ai && nodeIndex >= 16 && nodeIndex <= 20)
             {
@@ -399,7 +412,9 @@ namespace HarborRacer.Inputs
                 // a vertical face dead ahead (building corner the line cuts): give up the slide while there is still room to turn
                 bool wallAhead = speed > 20f && Physics.SphereCast(transform.position + transform.up * 1.2f, 0.9f, transform.forward, out var wallHit, 7f + speed * 0.22f,
                     (1 << Layers.Wall) | (1 << Layers.Drivable), QueryTriggerInteraction.Ignore) && wallHit.normal.y < 0.55f && wallHit.collider.GetComponentInParent<KartController>() == null;
-                if ((passed && driftTime > 1.6f) || broken || overshoot || wallAhead) { DriftHeld = false; driftDir = 0; driftTime = 0f; }
+                // a long multi-node drift (nodes 60-63) must not carry the kart far off the line
+                bool wide = driftTime > 0.6f && DistanceToLine() > 15f;
+                if ((passed && driftTime > 1.6f) || broken || overshoot || wallAhead || wide) { DriftHeld = false; driftDir = 0; driftTime = 0f; }
                 else if (driftDir != 0 && steer * driftDir < 0.3f) steer = driftDir * 0.3f;     // always lean into the drift
                 return steer;
             }

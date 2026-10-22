@@ -17,6 +17,7 @@ namespace HarborRacer.Kart
         public enum Phase { None, Falling, Hover }
 
         public KartController kart;
+        public float aiRespawnSpeed = 60f;
         public Phase Current { get; private set; }
         public bool Respawning => Current != Phase.None;
         public event Action Teleported;
@@ -95,7 +96,11 @@ namespace HarborRacer.Kart
         void Finish()
         {
             kart.Body.isKinematic = false;
-            kart.Body.linearVelocity = Vector3.zero;
+            // an AI kart rolls away at speed: from a standstill it reached the next jump too slowly, fell again and looped
+            var racer = GetComponent<HarborRacer.Race.RacerProgress>();
+            bool ai = racer != null && !racer.isPlayer;
+            kart.Body.linearVelocity = ai ? transform.forward * aiRespawnSpeed : Vector3.zero;
+            if (ai) kart.CurrentSpeed = aiRespawnSpeed;
             if (lockedByUs) { kart.controlsLocked = false; lockedByUs = false; }
             SetPhase(Phase.None);
         }
