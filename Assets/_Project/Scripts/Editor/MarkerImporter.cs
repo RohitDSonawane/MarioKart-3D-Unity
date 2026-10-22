@@ -110,10 +110,12 @@ namespace HarborRacer.EditorTools
                 foreach (var p in data.itemPaths)
                     BuildPath(paths, p, p.name == "TrolleyPath" ? Color.yellow : p.name == "MarioRaceEndPath" ? Color.magenta : Color.green);
 
-            // The harbor boat deck is missing from the imported mesh; the AI lines and the player's route run across it, so bridge it with an invisible road slab
+            // The harbor bridge deck has no collision in the imported mesh; the AI lines and the player's route run across it, so bridge it with an invisible road slab
             var patch = Child(Child(root, "Patches"), "HarborDeckFill");
-            patch.transform.position = new Vector3(593f, -110.9f, 20f); patch.layer = Layers.Drivable;
-            var pbox = patch.AddComponent<BoxCollider>(); pbox.size = new Vector3(66f, 3f, 240f);
+            // Only the bridge strip: the real road ends at x = 559 and the visible bridge rail at about x = 568. The slab used to run on to x = 626, which
+            // made the open water beside the bridge drivable.
+            patch.transform.position = new Vector3(565f, -110.9f, 0f); patch.layer = Layers.Drivable;
+            var pbox = patch.AddComponent<BoxCollider>(); pbox.size = new Vector3(12f, 3f, 164f);
 
             // Item boxes
             var boxes = Child(root, "ItemBoxes");
@@ -303,7 +305,7 @@ namespace HarborRacer.EditorTools
                 var m = g.AddComponent<ZoneMarker>(); m.kind = ZoneKind.JumpPanel; m.index = count;
                 m.tuning.Add(new Tuning { key = "JumpPanelScript.upforce", value = up });
                 m.tuning.Add(new Tuning { key = "JumpPanelScript.downforce", value = down });
-                float aimed = isPierBoatRamp ? 28f : AimLaunch(paths, ground + Vector3.up * 1.2f, dir);
+                float aimed = isPierBoatRamp ? 24f : AimLaunch(paths, ground + Vector3.up * 1.2f, dir);
                 if (aimed > 0f) m.tuning.Add(new Tuning { key = "JumpPanelScript.launch", value = aimed });
                 ZoneBinder.Bind(g, m);
                 count++;
@@ -322,7 +324,7 @@ namespace HarborRacer.EditorTools
             boatM.index = count;
             boatM.tuning.Add(new Tuning { key = "JumpPanelScript.upforce", value = -80000f });
             boatM.tuning.Add(new Tuning { key = "JumpPanelScript.downforce", value = 230000f });
-            boatM.tuning.Add(new Tuning { key = "JumpPanelScript.launch", value = 20f });
+            boatM.tuning.Add(new Tuning { key = "JumpPanelScript.launch", value = 34f });
             ZoneBinder.Bind(boatPanel, boatM);
             count++;
 

@@ -56,16 +56,43 @@ namespace HarborRacer.EditorTools
                             p1 = e.point - t * 7f; p2 = e.point + t * 7f;
                         }
                         if ((p2 - p1).magnitude < 1f || (p2 - p1).magnitude > 220f) continue;
-                        Vector3 mid = (p1 + p2) * 0.5f, dir = (p2 - p1).normalized;
-                        if (placed.Any(q => (q.mid - mid).magnitude < 3f && Mathf.Abs(Vector3.Dot(q.dir, dir)) > 0.95f)) continue;     // the other line already sealed this
-                        placed.Add((mid, dir));
-                        var b2 = new GameObject($"EdgeBarrier_{made:000}");
-                        b2.transform.SetParent(root.transform, false);
-                        b2.transform.SetPositionAndRotation(mid + Vector3.up * (Height * 0.5f - 0.5f), Quaternion.LookRotation(dir, Vector3.up));
-                        b2.layer = Layers.Wall;
-                        var box = b2.AddComponent<BoxCollider>();
-                        box.size = new Vector3(Thickness, Height, (p2 - p1).magnitude + 1.2f);
-                        made++;
+                        // Walls only where there really is a drop just beyond the edge: the straight line between two edge points can cross ground that
+                        // continues sideways (the tugboat deck beside the harbor bridge), and that must stay open.
+                        Vector3 dir = (p2 - p1).normalized, flat = Vector3.ProjectOnPlane(dir, Vector3.up).normalized;
+                        Vector3 outward = Vector3.Cross(Vector3.up, flat) * side;
+                        float len = (p2 - p1).magnitude; int steps = Mathf.Max(1, Mathf.CeilToInt(len / 3f));
+                        int runStart = -1;
+                        for (int s = 0; s <= steps; s++)
+                        {
+                            bool open = false;
+                            if (s < steps)
+                            {
+                                Vector3 q = p1 + dir * (len * (s + 0.5f) / steps);
+                                bool groundHere = Physics.Raycast(q + Vector3.up * 5f, Vector3.down, out var gq, 14f, Layers.GroundMask, QueryTriggerInteraction.Ignore);
+                                float refY = groundHere ? gq.point.y : q.y;
+                                bool groundBeyond = false;
+                                for (float d = 1.5f; d <= 4.5f && !groundBeyond; d += 1.5f)
+                                    groundBeyond = Physics.Raycast(q + outward * d + Vector3.up * 5f, Vector3.down, out var gb, 14f, Layers.GroundMask, QueryTriggerInteraction.Ignore) && Mathf.Abs(gb.point.y - refY) < 4f;
+                                open = !groundBeyond;
+                            }
+                            if (open && runStart < 0) runStart = s;
+                            if (!open && runStart >= 0)
+                            {
+                                float t0 = len * runStart / steps, t1 = len * s / steps;
+                                runStart = -1;
+                                if (t1 - t0 < 3f) continue;
+                                Vector3 a2 = p1 + dir * t0, b2p = p1 + dir * t1, mid = (a2 + b2p) * 0.5f, d2 = (b2p - a2).normalized;
+                                if (placed.Any(q => (q.mid - mid).magnitude < 3f && Mathf.Abs(Vector3.Dot(q.dir, d2)) > 0.95f)) continue;     // the other line already sealed this
+                                placed.Add((mid, d2));
+                                var bx = new GameObject($"EdgeBarrier_{made:000}");
+                                bx.transform.SetParent(root.transform, false);
+                                bx.transform.SetPositionAndRotation(mid + Vector3.up * (Height * 0.5f - 0.5f), Quaternion.LookRotation(d2, Vector3.up));
+                                bx.layer = Layers.Wall;
+                                var box = bx.AddComponent<BoxCollider>();
+                                box.size = new Vector3(Thickness, Height, (b2p - a2).magnitude + 1.2f);
+                                made++;
+                            }
+                        }
                     }
                 }
             }
