@@ -4,70 +4,30 @@ using UnityEngine;
 
 namespace HarborRacer.Kart
 {
-    /// <summary>
-    /// Procedural driver animation and facial expressions (Phase 11):
-    /// - Steering lean & drift lean (spine rotation)
-    /// - Head look-at nearest racer (within 20u)
-    /// - Face blinking (every 2-5 s) and reaction face swaps (trick/happy, hit/hurt)
-    /// - Hop/trick bounce
-    /// </summary>
     /// <summary>Index into <see cref="DriverVisuals.faceTextures"/>: the eye texture numbers of the character materials.</summary>
     public enum Face { Normal = 0, HalfBlink = 1, Blink = 2, Right = 3, Left = 4, Happy = 5, Hurt = 6, Sad = 7 }
 
+    /// <summary>
+    /// Driver facial expressions: blinking every 2-5 s and reaction faces (happy on a trick, hurt on a hit, left on a back-throw, sad or happy at the
+    /// finish). Body animation comes from <see cref="DriverPoseAnimator"/>; this component never touches the skeleton.
+    /// </summary>
     public class DriverVisuals : MonoBehaviour
     {
         public KartController kart;
-        public Transform spineBone;
-        public Transform headBone;
         public Renderer faceRenderer;
         public Texture[] faceTextures;   // indexed by Face (the character's marioeye_alb.N textures, same order for every driver)
 
-        [Header("Tuning")]
-        public float maxSteerLeanAngle = 18f;
-        public float driftLeanAngle = 22f;
-        public float leanLerpSpeed = 8f;
-        public float maxHeadYaw = 60f;
-
         Face sticky = Face.Normal;      // finish expression, held until the race restarts
         float reverseTime;
-        float currentLean;
         float blinkTimer;
         float reactionTimer;
         int currentFaceIndex = 0;
-        Transform nearestOpponent;
         MaterialPropertyBlock propBlock;
 
         void Awake()
         {
             if (kart == null) kart = GetComponentInParent<KartController>();
             propBlock = new MaterialPropertyBlock();
-
-            // Auto-locate spine and head if not assigned
-            if (spineBone == null)
-            {
-                foreach (var t in GetComponentsInChildren<Transform>())
-                {
-                    string n = t.name.ToLower();
-                    if (n.Contains("spine") || n.Contains("chest") || n.Contains("waist"))
-                    {
-                        spineBone = t;
-                        break;
-                    }
-                }
-            }
-
-            if (headBone == null)
-            {
-                foreach (var t in GetComponentsInChildren<Transform>())
-                {
-                    string n = t.name.ToLower();
-                    if (n.Contains("head"))
-                    {
-                        headBone = t;
-                        break;
-                    }
-                }
-            }
 
             // Auto-locate face / eye renderer if not assigned
             if (faceRenderer == null)
@@ -144,66 +104,9 @@ namespace HarborRacer.Kart
         {
             if (kart == null) return;
 
-            // 1. Procedural Spine Lean
-            float steerInput = 0f;
-            var playerInput = kart.GetComponent<Inputs.PlayerKartInput>();
-            if (playerInput != null) steerInput = playerInput.Steer;
-            else
-            {
-                var aiInput = kart.GetComponent<Inputs.PathDriverInput>();
-                if (aiInput != null) steerInput = aiInput.Steer;
-            }
-            float driftDir = kart.Drift != null && kart.Drift.IsDrifting ? kart.Drift.DriftDir : 0f;
-            float targetLean = (-steerInput * maxSteerLeanAngle) + (-driftDir * driftLeanAngle);
-
-            currentLean = Mathf.Lerp(currentLean, targetLean, leanLerpSpeed * Time.deltaTime);
-            if (spineBone != null)
-            {
-                spineBone.localRotation = Quaternion.Euler(0f, 0f, currentLean);
-            }
-
-            // 2. Head Look-At Nearby Opponent
-            UpdateHeadLook();
-
-            // 3. Facial Expression & Blinking
+            // No procedural spine lean or head turn: the character clips (DriverPoseAnimator) already lean into turns, and writing a bone's
+            // localRotation from here replaced the animated pose (the AI drivers lay flat on their backs).
             UpdateFace();
-        }
-
-        void UpdateHeadLook()
-        {
-            if (headBone == null) return;
-
-            // Find nearest opponent within 20u
-            float minDist = 20f;
-            nearestOpponent = null;
-
-            var racers = RaceManager.Instance != null ? RaceManager.Instance.Racers : null;
-            if (racers != null)
-            {
-                for (int i = 0; i < racers.Count; i++)
-                {
-                    var r = racers[i];
-                    if (r == null || r.transform == kart.transform) continue;
-                    float d = Vector3.Distance(kart.transform.position, r.transform.position);
-                    if (d < minDist)
-                    {
-                        minDist = d;
-                        nearestOpponent = r.transform;
-                    }
-                }
-            }
-
-            if (nearestOpponent != null && kart.ForwardSpeed > 0f)
-            {
-                Vector3 toOpponent = nearestOpponent.position - kart.transform.position;
-                Vector3 localDir = kart.transform.InverseTransformDirection(toOpponent);
-                float yaw = Mathf.Clamp(Mathf.Atan2(localDir.x, localDir.z) * Mathf.Rad2Deg, -maxHeadYaw, maxHeadYaw);
-                headBone.localRotation = Quaternion.Slerp(headBone.localRotation, Quaternion.Euler(0f, yaw, 0f), 5f * Time.deltaTime);
-            }
-            else
-            {
-                headBone.localRotation = Quaternion.Slerp(headBone.localRotation, Quaternion.identity, 5f * Time.deltaTime);
-            }
         }
 
         void UpdateFace()
