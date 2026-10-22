@@ -72,7 +72,7 @@ namespace HarborRacer.Inputs
         public float respawnAfterSeconds = 12f;
 
         JumpPanelZone[] jumpPanels = new JumpPanelZone[0];
-        float stuckTimer, reverseTimer, noProgressTimer;
+        float stuckTimer, reverseTimer, noProgressTimer, bestNodeDist = float.MaxValue;
         int lastNode = -1;
         KartVisuals visuals;
         RacerProgress racer;
@@ -118,7 +118,7 @@ namespace HarborRacer.Inputs
         }
 
         /// <summary>the design notes §4.3: after a respawn the target node must follow the kart, not the spot it fell from.</summary>
-        void OnTeleported() { if (racerAI) { SnapToPath(); avoidOffset = avoidTarget = 0f; avoidTimer = 0f; noProgressTimer = 0f; } }
+        void OnTeleported() { if (racerAI) { SnapToPath(); avoidOffset = avoidTarget = 0f; avoidTimer = 0f; noProgressTimer = 0f; bestNodeDist = float.MaxValue; } }
 
         /// <summary>the design notes §9.2.8: every lap the AI picks a random racing line.</summary>
         void OnLap(int lap)
@@ -149,8 +149,17 @@ namespace HarborRacer.Inputs
 
         void SkipStuckNode()
         {
-            nodeIndex = (nodeIndex + 1) % path.Count;
-            Vector3 p = path.GetNode(nodeIndex).position;
+            // The hop goes to the point of the racing line just ahead of the kart, never to a far-away node (the nodes can be 150-300 u apart,
+            // which made a wedged kart vanish and reappear far down the track). The node is only skipped when the kart is already next to it.
+            int n = path.Count;
+            if ((path.GetNode(nodeIndex).position - transform.position).magnitude < 25f) nodeIndex = (nodeIndex + 1) % n;
+            Vector3 segEnd = path.GetNode(nodeIndex).position, segStart = path.GetNode((nodeIndex - 1 + n) % n).position;
+            Vector3 segDir = Vector3.ProjectOnPlane(segEnd - segStart, Vector3.up);
+            float segLen = segDir.magnitude;
+            segDir = segLen > 0.01f ? segDir / segLen : transform.forward;
+            float along = Mathf.Clamp(Vector3.Dot(Vector3.ProjectOnPlane(transform.position - segStart, Vector3.up), segDir), 0f, segLen);
+            Vector3 p = segStart + segDir * Mathf.Min(along + 10f, segLen);
+            p = transform.position + Vector3.ClampMagnitude(p - transform.position, 30f);   // a recovery hop is a short nudge, not a jump down the track
             bool nearPlayer = false;
             foreach (var r in Object.FindObjectsByType<RacerProgress>())
             {
@@ -169,7 +178,7 @@ namespace HarborRacer.Inputs
                 return;
             }
             if (!Physics.Raycast(p + Vector3.up * 6f, Vector3.down, out var hit, 40f, ~0, QueryTriggerInteraction.Ignore)) return;
-            Vector3 dir = Vector3.ProjectOnPlane(path.GetNode((nodeIndex + 1) % path.Count).position - p, Vector3.up).normalized;
+            Vector3 dir = segDir;
             kart.Body.position = hit.point + hit.normal * 1.2f;
             kart.Body.rotation = Quaternion.LookRotation(dir, hit.normal);
             kart.transform.SetPositionAndRotation(kart.Body.position, kart.Body.rotation);
@@ -267,11 +276,15 @@ namespace HarborRacer.Inputs
             else stuckTimer = 0f;
 
             // no node progress for a long time (wedged on a ramp, wrong geometry): skip the node, and if nobody can see it, hop there
-            if (nodeIndex != lastNode) { lastNode = nodeIndex; noProgressTimer = 0f; }
+            // "no progress" means the kart stopped getting closer to its node. A slow start or a slow ramp is not stuck: the first nodes
+            // of a line are about 150 u apart, so a standing start needs 4-5 s to reach one and used to be hopped forward at race time 4 s.
+            float nodeDist = (path.GetNode(nodeIndex).position - pos).magnitude;
+            if (nodeIndex != lastNode) { lastNode = nodeIndex; noProgressTimer = 0f; bestNodeDist = nodeDist; }
+            else if (nodeDist < bestNodeDist - 3f) { bestNodeDist = nodeDist; noProgressTimer = 0f; }
             else if (!kart.controlsLocked && !kart.Respawn.Respawning)
             {
                 noProgressTimer += dt;
-                if (noProgressTimer > skipAfterSeconds) { SkipStuckNode(); noProgressTimer = skipAfterSeconds * 0.5f; }
+                if (noProgressTimer > skipAfterSeconds) { SkipStuckNode(); noProgressTimer = skipAfterSeconds * 0.5f; bestNodeDist = float.MaxValue; }
                 if (ai && noProgressTimer > respawnAfterSeconds) { kart.Respawn.Begin(RespawnReason.OutOfBounds); noProgressTimer = 0f; }
             }
 
