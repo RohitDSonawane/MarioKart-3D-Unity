@@ -141,6 +141,12 @@ namespace HarborRacer.Inputs
             nodeIndex = (bi + 1) % path.Count;
         }
 
+        /// <summary>True when drivable ground lies within a few units below the point (no gap or edge there).</summary>
+        static bool RoadUnder(Vector3 p, Vector3 up)
+        {
+            return Physics.Raycast(p + up * 3f, -up, 9f, Layers.GroundMask, QueryTriggerInteraction.Ignore);
+        }
+
         DriftHint HintAt(int i)
         {
             var wp = path.GetNode(i).GetComponent<Waypoint>();
@@ -215,7 +221,14 @@ namespace HarborRacer.Inputs
                 target = prevNode + sd * lead;
                 right = Vector3.Cross(Vector3.up, sd);
             }
-            if (ai) target += right * (profile.lineOffset + UpdateAvoidance(dt, pos, fwd, up, speed));
+            if (ai)
+            {
+                float lateral = profile.lineOffset + UpdateAvoidance(dt, pos, fwd, up, speed);
+                // lane offsets and sidesteps must never aim at a spot with no road under it (the narrow entrance of the overpass ramp,
+                // bridge edges): the kart would be steered off the deck. Fall back to the centre of the line there.
+                if (Mathf.Abs(lateral) > 0.01f && !RoadUnder(target + right * lateral, up) && !RoadUnder(target + right * lateral * 0.5f, up)) lateral = 0f;
+                target += right * lateral;
+            }
             AimPoint = target;
 
             float ang = Vector3.SignedAngle(fwd, Vector3.ProjectOnPlane(target - pos, up), up);
@@ -249,6 +262,10 @@ namespace HarborRacer.Inputs
                 desired = Mathf.Min(desired, 42f);
             }
             if (forcedSpeed > 0f) desired = forcedSpeed;
+            // a vertical face dead ahead (a building corner the line cuts across): ease off so the turn can still clear it
+            if (ai && speed > 30f && Physics.SphereCast(pos + up * 1.2f, 0.9f, fwd, out var faceHit, 8f + speed * 0.3f, (1 << Layers.Wall) | (1 << Layers.Drivable), QueryTriggerInteraction.Ignore)
+                && faceHit.normal.y < 0.55f && faceHit.collider.GetComponentInParent<KartController>() == null)
+                desired = Mathf.Min(desired, Mathf.Max(30f, speed - 25f));
             bool drifting = ai && DriftHeld;
             if (drifting) desired = Mathf.Max(desired, 60f);               // keep the speed up through a drift (throttle stays on below)
             float throttle = (speed < desired || drifting) ? 1f : 0f;     // lifting off cancels a drift
@@ -257,15 +274,19 @@ namespace HarborRacer.Inputs
             if (ai)
             {
                 StepRubberBand(dt);
-                steer = StepDrift(dt, steer, speed);
+                steer = StepDrift(dt, steer, speed, ang);
                 StepTrick(dt);
             }
 
             // stuck recovery: reverse out for a moment
+            // never back up toward a drop: with no road behind the kart, stay put and let the progress check nudge it instead
+            if (reverseTimer > 0f && !(RoadUnder(pos - fwd * 5f, up) && RoadUnder(pos - fwd * 9f, up))) reverseTimer = 0f;
             if (reverseTimer > 0f)
             {
                 reverseTimer -= dt;
-                throttle = 0f; brake = 1f; steer = -Mathf.Sign(steer == 0f ? 1f : steer);
+                throttle = 0f; brake = 1f;
+                // reversing turns the nose the same way the steering says, so back away while swinging it toward the node
+                steer = Mathf.Abs(ang) > 3f ? Mathf.Sign(ang) : -Mathf.Sign(steer == 0f ? 1f : steer);
                 DriftHeld = false;
             }
             else if (speed < 3f && !kart.controlsLocked)
@@ -364,7 +385,7 @@ namespace HarborRacer.Inputs
         }
 
         /// <summary>the design notes §9.2.4: start a drift on the approach to a DriftLeft / DriftRight node, release after the last one.</summary>
-        float StepDrift(float dt, float steer, float speed)
+        float StepDrift(float dt, float steer, float speed, float angToAim)
         {
             var st = kart.State;
             if (DriftHeld)
@@ -373,7 +394,12 @@ namespace HarborRacer.Inputs
                 bool passed = HintAt(nodeIndex) == DriftHint.None && Vector3.Distance(path.GetNode((nodeIndex - 1 + path.Count) % path.Count).position, transform.position) < 40f
                               || driftTime > 5f;
                 bool broken = speed < 35f || st.Gliding || st.OnJumpPanel || st.Stunned || kart.Respawn.Respawning;
-                if ((passed && driftTime > 1.6f) || broken) { DriftHeld = false; driftDir = 0; driftTime = 0f; }
+                // the line turns away from the drift: the slide is carrying the kart past it (into the wall at the end of the corner)
+                bool overshoot = driftDir != 0 && angToAim * driftDir < -12f && driftTime > 0.4f;
+                // a vertical face dead ahead (building corner the line cuts): give up the slide while there is still room to turn
+                bool wallAhead = speed > 20f && Physics.SphereCast(transform.position + transform.up * 1.2f, 0.9f, transform.forward, out var wallHit, 7f + speed * 0.22f,
+                    (1 << Layers.Wall) | (1 << Layers.Drivable), QueryTriggerInteraction.Ignore) && wallHit.normal.y < 0.55f && wallHit.collider.GetComponentInParent<KartController>() == null;
+                if ((passed && driftTime > 1.6f) || broken || overshoot || wallAhead) { DriftHeld = false; driftDir = 0; driftTime = 0f; }
                 else if (driftDir != 0 && steer * driftDir < 0.3f) steer = driftDir * 0.3f;     // always lean into the drift
                 return steer;
             }

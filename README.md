@@ -82,7 +82,7 @@ The scripts in `Tools/Tests` run inside the open editor, drive karts with script
 - Item models are static. Spin and spawn animations are not attached yet.
 - No throw delay on items.
 - Star power uses a colour tint and aura rather than a full material swap.
-- The AI can still hesitate on one curb near the harbour wall and recovers by itself.
+- AI karts can still stall briefly at a couple of corners (and now reverse out of it themselves).
 - Windows only. Other platforms have not been tried.
 
 ## Assets and credits
