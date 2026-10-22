@@ -23,6 +23,7 @@ public static class Chain
         sb.AppendLine("Ui: " + UiBuilder.Build());
         sb.AppendLine("Look: " + SceneLookBuilder.Build());
         sb.AppendLine("Toads: " + SpectatorBuilder.Build());
+        sb.AppendLine("EdgeBarriers: " + EdgeBarrierBuilder.Build());
         sb.AppendLine("Ambient: " + AmbientAudioBuilder.Build());
         EditorSceneManager.MarkSceneDirty(scene);
         EditorSceneManager.SaveScene(scene);
