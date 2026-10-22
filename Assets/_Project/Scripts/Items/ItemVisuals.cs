@@ -77,6 +77,7 @@ namespace HarborRacer.Items
                 go.layer = Layers.Item;
                 go.transform.localPosition = Vector3.zero;
                 go.transform.localRotation = Quaternion.identity;
+                FitToWorldSize(go.transform, WorldSize(baseId));
                 return go.transform;
             }
 
@@ -134,6 +135,29 @@ namespace HarborRacer.Items
                 _ => Vector3.one * 0.9f
             };
             return Make(shape, ItemInfo.Tint(id), scale, parent);
+        }
+
+        /// <summary>Longest side, in world units, of an item model in play. The item prefabs are 5-9 units wide at import scale, which next to a
+        /// kart about 3 units wide made carried and thrown items twice the size of the kart.</summary>
+        public static float WorldSize(ItemId id) => id switch
+        {
+            ItemId.Banana => 1.6f,
+            ItemId.GreenShell or ItemId.RedShell => 1.7f,
+            ItemId.BlueShell => 2.4f,
+            ItemId.BobOmb => 1.8f,
+            ItemId.Mushroom or ItemId.GoldenMushroom => 1.7f,
+            ItemId.Star => 1.8f,
+            ItemId.Coin => 1.2f,
+            ItemId.BulletBill => 5f,
+            _ => 1.7f,
+        };
+
+        static void FitToWorldSize(Transform t, float target)
+        {
+            var b = new Bounds(t.position, Vector3.zero);
+            foreach (var r in t.GetComponentsInChildren<Renderer>()) b.Encapsulate(r.bounds);
+            float longest = Mathf.Max(b.size.x, b.size.y, b.size.z);
+            if (longest > 0.01f) t.localScale *= target / longest;
         }
 
         static string ModelPath(ItemId id) => id switch
